@@ -1,9 +1,16 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+import { useSubscriptionStore } from '../../stores/useSubscriptionStore'
+import type { SubscriptionPlan } from '../../stores/useSubscriptionStore'
+
 useHead({
   title: 'Список продуктів'
 })
 
-const plans = [
+const router = useRouter()
+const subscriptionStore = useSubscriptionStore()
+
+const plans: SubscriptionPlan[] = [
   {
     title: 'Starter - Annual',
     price: '83.25',
@@ -41,6 +48,11 @@ const plans = [
     skips: '2,000 free skip traces'
   }
 ]
+
+function choosePlan(plan: SubscriptionPlan) {
+  subscriptionStore.selectPlan(plan)
+  router.push('/checkout')
+}
 </script>
 
 <template>
@@ -76,7 +88,9 @@ const plans = [
 
           <div class="saving">{{ plan.saving }}</div>
 
-          <button class="try">Try It Free</button>
+          <button class="try" @click="choosePlan(plan)">
+            Try It Free
+          </button>
 
           <hr>
 
@@ -89,10 +103,7 @@ const plans = [
               </div>
             </li>
 
-            <li>
-              <span class="star">✦</span>
-              <strong>Save unlimited properties</strong>
-            </li>
+            <li><span class="star">✦</span><strong>Save unlimited properties</strong></li>
 
             <li>
               <span class="star">✦</span>
@@ -128,7 +139,7 @@ const plans = [
   margin: 0 auto;
   padding: 24px;
   font-family: Arial, sans-serif;
-  background: #ffffff;
+  background: white;
   min-height: 100vh;
 }
 

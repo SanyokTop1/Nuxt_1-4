@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
+import { useSubscriptionStore } from '../../stores/useSubscriptionStore'
+
 useHead({
   title: 'Checkout'
 })
 
-const { data } = await useFetch('/api/subscription-info')
+const subscriptionStore = useSubscriptionStore()
+const { selectedPlan, hasSelectedPlan } = storeToRefs(subscriptionStore)
 
 const form = ref({
   cardNumber: '',
@@ -18,7 +22,7 @@ const message = ref('')
 const success = ref(false)
 
 async function submitForm() {
-  const response = await $fetch('/api/subscription/create', {
+  const response = await $fetch<{ success: boolean; message: string }>('/api/subscription/create', {
     method: 'POST',
     body: form.value
   })
@@ -36,37 +40,49 @@ async function submitForm() {
       <NuxtLink to="/products" class="back">&lt;&lt; back</NuxtLink>
 
       <h1>You’re Almost In - Start Your 3-Day Free Trial Now!</h1>
+
       <p class="subtitle">
         Set up your account to gain instant access! You won’t be charged if you decide to cancel within 3 days
       </p>
 
-      <div class="grid">
+      <div v-if="!hasSelectedPlan" class="empty">
+        <p>Підписку не вибрано.</p>
+        <NuxtLink to="/products">Перейти до вибору підписки</NuxtLink>
+      </div>
+
+      <div v-else class="grid">
         <section class="plan-card">
           <div class="line"></div>
 
           <div class="card-content">
-            <h2>{{ data?.plan.name }}</h2>
+            <h2>{{ selectedPlan?.title }}</h2>
 
             <span class="badge">3-days free then:</span>
 
             <div class="price">
-              ${{ data?.plan.monthlyPrice.toFixed(2) }}<span>/month</span>
+              ${{ selectedPlan?.price }}<span>/month</span>
             </div>
 
             <p>
               billed yearly at
-              <s>${{ data?.plan.yearlyOldPrice }}</s>
-              ${{ data?.plan.yearlyPrice }}
+              <s>{{ selectedPlan?.oldPrice }}</s>
+              {{ selectedPlan?.yearPrice }}
             </p>
 
-            <div class="save">${{ data?.plan.savings }} in savings</div>
+            <div class="save">{{ selectedPlan?.saving }}</div>
 
             <hr>
 
             <ul>
-              <li v-for="feature in data?.plan.features" :key="feature">
-                ✦ {{ feature }}
-              </li>
+              <li>✦ {{ selectedPlan?.users }}</li>
+              <li>✦ Save unlimited properties</li>
+              <li>✦ {{ selectedPlan?.exports }}</li>
+              <li>✦ {{ selectedPlan?.skips }}</li>
+              <li>✦ Imports $0.01</li>
+              <li>✦ FREE daily product trainings and support</li>
+              <li>✦ Full suite of next-gen investing tools</li>
+              <li>✦ Industry first AI powered comp tool</li>
+              <li>✦ Includes dedicated support agent</li>
             </ul>
           </div>
         </section>
@@ -76,17 +92,17 @@ async function submitForm() {
 
           <div class="row">
             <span>Annual Plan</span>
-            <span>${{ data?.summary.annualPlan.toFixed(2) }}</span>
+            <span>{{ selectedPlan?.yearPrice }}</span>
           </div>
 
           <div class="row">
             <span>Total Due <small>(*not including sales tax where applicable)</small></span>
-            <span>${{ data?.summary.totalDue.toFixed(2) }}</span>
+            <span>{{ selectedPlan?.yearPrice }}</span>
           </div>
 
           <div class="row bold">
             <span>Due Today</span>
-            <span>${{ data?.summary.dueToday.toFixed(2) }}</span>
+            <span>$0.00</span>
           </div>
 
           <div class="trial">Includes 3-Day Free Trial</div>
@@ -162,6 +178,13 @@ h1 {
 .subtitle {
   font-size: 18px;
   margin-bottom: 36px;
+}
+
+.empty {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
 }
 
 .grid {
